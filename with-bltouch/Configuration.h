@@ -21,8 +21,6 @@
  */
 #pragma once
 
-#define CONFIG_EXAMPLES_DIR "Creality/Ender-3 Pro/CrealityV422"
-
 /**
  * Configuration.h
  *
@@ -37,7 +35,7 @@
  *
  * Advanced settings can be found in Configuration_adv.h
  */
-#define CONFIGURATION_H_VERSION 02010100
+#define CONFIGURATION_H_VERSION 02010200
 
 //===========================================================================
 //============================= Getting Started =============================
@@ -62,7 +60,7 @@
 // @section info
 
 // Author info of this build printed to the host during boot and M115
-#define STRING_CONFIG_H_AUTHOR "(none, default config)" // Who made the changes.
+#define STRING_CONFIG_H_AUTHOR "eric, 01142023" // Who made the changes.
 //#define CUSTOM_VERSION_FILE Version.h // Path from the root directory (no quotes)
 
 /**
@@ -77,7 +75,7 @@
  */
 
 // Show the Marlin bootscreen on startup. ** ENABLE FOR PRODUCTION **
-//#define SHOW_BOOTSCREEN
+#define SHOW_BOOTSCREEN
 
 // Show the bitmap in Marlin/_Bootscreen.h on startup.
 //#define SHOW_CUSTOM_BOOTSCREEN
@@ -122,7 +120,7 @@
  * Currently Ethernet (-2) is only supported on Teensy 4.1 boards.
  * :[-2, -1, 0, 1, 2, 3, 4, 5, 6, 7]
  */
-#define SERIAL_PORT_2 3
+//#define SERIAL_PORT_2 3
 //#define BAUDRATE_2 250000   // :[2400, 9600, 19200, 38400, 57600, 115200, 250000, 500000, 1000000] Enable to override BAUDRATE
 
 /**
@@ -137,11 +135,13 @@
 //#define BLUETOOTH
 
 // Name displayed in the LCD "Ready" message and Info menu
-#define CUSTOM_MACHINE_NAME "Clunkerton BLT"
+#define CUSTOM_MACHINE_NAME "Eric's Ender 3 Pro"
 
 // Printer's unique ID, used by some programs to differentiate between machines.
 // Choose your own or use a service like https://www.uuidgenerator.net/version4
 //#define MACHINE_UUID "00000000-0000-0000-0000-000000000000"
+
+// @section stepper drivers
 
 /**
  * Stepper Drivers
@@ -242,6 +242,8 @@
   //#define SINGLENOZZLE_STANDBY_FAN
 #endif
 
+// @section multi-material
+
 /**
  * Multi-Material Unit
  * Set to one of these predefined models:
@@ -254,6 +256,7 @@
  *
  * Requires NOZZLE_PARK_FEATURE to park print head in case MMU unit fails.
  * See additional options in Configuration_adv.h.
+ * :["PRUSA_MMU1", "PRUSA_MMU2", "PRUSA_MMU2S", "EXTENDABLE_EMU_MMU2", "EXTENDABLE_EMU_MMU2S"]
  */
 //#define MMU_MODEL PRUSA_MMU2
 
@@ -493,7 +496,7 @@
  *    30 : 100kΩ  Kis3d Silicone heating mat 200W/300W with 6mm precision cast plate (EN AW 5083) NTC100K - beta 3950
  *    60 : 100kΩ  Maker's Tool Works Kapton Bed Thermistor - beta 3950
  *    61 : 100kΩ  Formbot/Vivedino 350°C Thermistor - beta 3950
- *    66 : 4.7MΩ  Dyze Design High Temperature Thermistor
+ *    66 : 4.7MΩ  Dyze Design / Trianglelab T-D500 500°C High Temperature Thermistor
  *    67 : 500kΩ  SliceEngineering 450°C Thermistor
  *    68 : PT100 amplifier board from Dyze Design
  *    70 : 100kΩ  bq Hephestos 2
@@ -515,6 +518,7 @@
  *   110 : Pt100  with 1kΩ pullup (atypical)
  *   147 : Pt100  with 4.7kΩ pullup
  *  1010 : Pt1000 with 1kΩ pullup (atypical)
+ *  1022 : Pt1000 with 2.2kΩ pullup
  *  1047 : Pt1000 with 4.7kΩ pullup (E3D)
  *    20 : Pt100  with circuit in the Ultimainboard V2.x with mainboard ADC reference voltage = INA826 amplifier-board supply voltage.
  *                NOTE: (1) Must use an ADC input with no pullup. (2) Some INA826 amplifiers are unreliable at 3.3V so consider using sensor 147, 110, or 21.
@@ -559,6 +563,10 @@
 #if TEMP_SENSOR_IS_MAX_TC(1)
   #define MAX31865_SENSOR_OHMS_1      100
   #define MAX31865_CALIBRATION_OHMS_1 430
+#endif
+#if TEMP_SENSOR_IS_MAX_TC(2)
+  #define MAX31865_SENSOR_OHMS_2      100
+  #define MAX31865_CALIBRATION_OHMS_2 430
 #endif
 
 #if HAS_E_TEMP_SENSOR
@@ -725,6 +733,7 @@
  * impact FET heating. This also works fine on a Fotek SSR-10DA Solid State Relay into a 250W
  * heater. If your configuration is significantly different than this and you don't understand
  * the issues involved, don't use bed PID until someone else verifies that your hardware works.
+ * @section bed temp
  */
 #define PIDTEMPBED
 
@@ -871,7 +880,7 @@
 //#define POLARGRAPH
 #if ENABLED(POLARGRAPH)
   #define POLARGRAPH_MAX_BELT_LEN 1035.0
-  #define POLAR_SEGMENTS_PER_SECOND 5
+  #define DEFAULT_SEGMENTS_PER_SECOND 5
 #endif
 
 // @section delta
@@ -883,33 +892,31 @@
   // Make delta curves from many straight lines (linear interpolation).
   // This is a trade-off between visible corners (not enough segments)
   // and processor overload (too many expensive sqrt calls).
-  #define DELTA_SEGMENTS_PER_SECOND 200
+  #define DEFAULT_SEGMENTS_PER_SECOND 200
 
   // After homing move down to a height where XY movement is unconstrained
   //#define DELTA_HOME_TO_SAFE_ZONE
 
   // Delta calibration menu
-  // uncomment to add three points calibration menu option.
+  // Add three-point calibration to the MarlinUI menu.
   // See http://minow.blogspot.com/index.html#4918805519571907051
   //#define DELTA_CALIBRATION_MENU
 
-  // uncomment to add G33 Delta Auto-Calibration (Enable EEPROM_SETTINGS to store results)
+  // G33 Delta Auto-Calibration. Enable EEPROM_SETTINGS to store results.
   //#define DELTA_AUTO_CALIBRATION
 
-  // NOTE NB all values for DELTA_* values MUST be floating point, so always have a decimal point in them
-
   #if ENABLED(DELTA_AUTO_CALIBRATION)
-    // set the default number of probe points : n*n (1 -> 7)
+    // Default number of probe points : n*n (1 -> 7)
     #define DELTA_CALIBRATION_DEFAULT_POINTS 4
   #endif
 
   #if EITHER(DELTA_AUTO_CALIBRATION, DELTA_CALIBRATION_MENU)
-    // Set the steprate for papertest probing
+    // Step size for paper-test probing
     #define PROBE_MANUALLY_STEP 0.05      // (mm)
   #endif
 
   // Print surface diameter/2 minus unreachable space (avoid collisions with vertical towers).
-  #define DELTA_PRINTABLE_RADIUS 140.0    // (mm)
+  #define PRINTABLE_RADIUS       140.0    // (mm)
 
   // Maximum reachable area
   #define DELTA_MAX_RADIUS       140.0    // (mm)
@@ -949,7 +956,7 @@
 //#define MP_SCARA
 #if EITHER(MORGAN_SCARA, MP_SCARA)
   // If movement is choppy try lowering this value
-  #define SCARA_SEGMENTS_PER_SECOND 200
+  #define DEFAULT_SEGMENTS_PER_SECOND 200
 
   // Length of inner and outer support arms. Measure arm lengths precisely.
   #define SCARA_LINKAGE_1 150       // (mm)
@@ -963,7 +970,7 @@
   #if ENABLED(MORGAN_SCARA)
 
     //#define DEBUG_SCARA_KINEMATICS
-    #define SCARA_FEEDRATE_SCALING  // Convert XY feedrate from mm/s to degrees/s on the fly
+    #define FEEDRATE_SCALING        // Convert XY feedrate from mm/s to degrees/s on the fly
 
     // Radius around the center where the arm cannot reach
     #define MIDDLE_DEAD_ZONE_R   0  // (mm)
@@ -985,20 +992,20 @@
 // Enable for TPARA kinematics and configure below
 //#define AXEL_TPARA
 #if ENABLED(AXEL_TPARA)
-  #define DEBUG_ROBOT_KINEMATICS
-  #define ROBOT_SEGMENTS_PER_SECOND 200
+  #define DEBUG_TPARA_KINEMATICS
+  #define DEFAULT_SEGMENTS_PER_SECOND 200
 
   // Length of inner and outer support arms. Measure arm lengths precisely.
-  #define ROBOT_LINKAGE_1 120       // (mm)
-  #define ROBOT_LINKAGE_2 120       // (mm)
+  #define TPARA_LINKAGE_1 120       // (mm)
+  #define TPARA_LINKAGE_2 120       // (mm)
 
   // SCARA tower offset (position of Tower relative to bed zero position)
   // This needs to be reasonably accurate as it defines the printbed position in the SCARA space.
-  #define ROBOT_OFFSET_X    0       // (mm)
-  #define ROBOT_OFFSET_Y    0       // (mm)
-  #define ROBOT_OFFSET_Z    0       // (mm)
+  #define TPARA_OFFSET_X    0       // (mm)
+  #define TPARA_OFFSET_Y    0       // (mm)
+  #define TPARA_OFFSET_Z    0       // (mm)
 
-  #define SCARA_FEEDRATE_SCALING  // Convert XY feedrate from mm/s to degrees/s on the fly
+  #define FEEDRATE_SCALING        // Convert XY feedrate from mm/s to degrees/s on the fly
 
   // Radius around the center where the arm cannot reach
   #define MIDDLE_DEAD_ZONE_R   0  // (mm)
@@ -1006,6 +1013,59 @@
   // Calculated from Calibration Guide and M360 / M114. See http://reprap.harleystudio.co.za/?page_id=1073
   #define THETA_HOMING_OFFSET  0
   #define PSI_HOMING_OFFSET    0
+#endif
+
+// @section polar
+
+/**
+ * POLAR Kinematics
+ *  developed by Kadir ilkimen for PolarBear CNC and babyBear
+ *  https://github.com/kadirilkimen/Polar-Bear-Cnc-Machine
+ *  https://github.com/kadirilkimen/babyBear-3D-printer
+ *
+ * A polar machine can have different configurations.
+ * This kinematics is only compatible with the following configuration:
+ *        X : Independent linear
+ *   Y or B : Polar
+ *        Z : Independent linear
+ *
+ * For example, PolarBear has CoreXZ plus Polar Y or B.
+ *
+ * Motion problem for Polar axis near center / origin:
+ *
+ * 3D printing:
+ * Movements very close to the center of the polar axis take more time than others.
+ * This brief delay results in more material deposition due to the pressure in the nozzle.
+ *
+ * Current Kinematics and feedrate scaling deals with this by making the movement as fast
+ * as possible. It works for slow movements but doesn't work well with fast ones. A more
+ * complicated extrusion compensation must be implemented.
+ *
+ * Ideally, it should estimate that a long rotation near the center is ahead and will cause
+ * unwanted deposition. Therefore it can compensate the extrusion beforehand.
+ *
+ * Laser cutting:
+ * Same thing would be a problem for laser engraving too. As it spends time rotating at the
+ * center point, more likely it will burn more material than it should. Therefore similar
+ * compensation would be implemented for laser-cutting operations.
+ *
+ * Milling:
+ * This shouldn't be a problem for cutting/milling operations.
+ */
+//#define POLAR
+#if ENABLED(POLAR)
+  #define DEFAULT_SEGMENTS_PER_SECOND 180   // If movement is choppy try lowering this value
+  #define PRINTABLE_RADIUS 82.0f            // (mm) Maximum travel of X axis
+
+  // Movements fall inside POLAR_FAST_RADIUS are assigned the highest possible feedrate
+  // to compensate unwanted deposition related to the near-origin motion problem.
+  #define POLAR_FAST_RADIUS 3.0f            // (mm)
+
+  // Radius which is unreachable by the tool.
+  // Needed if the tool is not perfectly aligned to the center of the polar axis.
+  #define POLAR_CENTER_OFFSET 0.0f          // (mm)
+
+  #define FEEDRATE_SCALING                  // Convert XY feedrate from mm/s to degrees/s on the fly
 #endif
 
 // @section machine
@@ -1196,10 +1256,16 @@
  *   M204 P    Acceleration
  *   M204 R    Retract Acceleration
  *   M204 T    Travel Acceleration
+ *   M204 I    Angular Acceleration
+ *   M204 J    Angular Travel Acceleration
  */
-#define DEFAULT_ACCELERATION           500  // X, Y, Z ... and E acceleration for printing moves
-#define DEFAULT_RETRACT_ACCELERATION   500  // E acceleration for retracts
-#define DEFAULT_TRAVEL_ACCELERATION   1000  // X, Y, Z ... acceleration for travel (non printing) moves
+#define DEFAULT_ACCELERATION                   500  // X, Y, Z ... and E acceleration for printing moves
+#define DEFAULT_RETRACT_ACCELERATION           500  // E acceleration for retracts
+#define DEFAULT_TRAVEL_ACCELERATION           1000  // X, Y, Z ... acceleration for travel (non printing) moves
+#if ENABLED(AXIS4_ROTATES)
+  #define DEFAULT_ANGULAR_ACCELERATION        3000  // I, J, K acceleration for rotational-only printing moves
+  #define DEFAULT_ANGULAR_TRAVEL_ACCELERATION 3000  // I, J, K acceleration for rotational-only travel (non printing) moves
+#endif
 
 /**
  * Default Jerk limits (mm/s)
@@ -1252,7 +1318,7 @@
  *
  * See https://github.com/synthetos/TinyG/wiki/Jerk-Controlled-Motion-Explained
  */
-//#define S_CURVE_ACCELERATION
+#define S_CURVE_ACCELERATION
 
 //===========================================================================
 //============================= Z Probe Options =============================
@@ -1414,13 +1480,13 @@
   // 2 or 3 sets of coordinates for deploying and retracting the spring loaded touch probe on G29,
   // if servo actuated touch probe is not defined. Uncomment as appropriate for your printer/probe.
 
-  #define Z_PROBE_ALLEN_KEY_DEPLOY_1 { 30.0, DELTA_PRINTABLE_RADIUS, 100.0 }
+  #define Z_PROBE_ALLEN_KEY_DEPLOY_1 { 30.0, PRINTABLE_RADIUS, 100.0 }
   #define Z_PROBE_ALLEN_KEY_DEPLOY_1_FEEDRATE XY_PROBE_FEEDRATE
 
-  #define Z_PROBE_ALLEN_KEY_DEPLOY_2 { 0.0, DELTA_PRINTABLE_RADIUS, 100.0 }
+  #define Z_PROBE_ALLEN_KEY_DEPLOY_2 { 0.0, PRINTABLE_RADIUS, 100.0 }
   #define Z_PROBE_ALLEN_KEY_DEPLOY_2_FEEDRATE (XY_PROBE_FEEDRATE)/10
 
-  #define Z_PROBE_ALLEN_KEY_DEPLOY_3 { 0.0, (DELTA_PRINTABLE_RADIUS) * 0.75, 100.0 }
+  #define Z_PROBE_ALLEN_KEY_DEPLOY_3 { 0.0, (PRINTABLE_RADIUS) * 0.75, 100.0 }
   #define Z_PROBE_ALLEN_KEY_DEPLOY_3_FEEDRATE XY_PROBE_FEEDRATE
 
   #define Z_PROBE_ALLEN_KEY_STOW_1 { -64.0, 56.0, 23.0 } // Move the probe into position
@@ -1477,7 +1543,7 @@
  *     |    [-]    |
  *     O-- FRONT --+
  */
-#define NOZZLE_TO_PROBE_OFFSET {-44,-9, 0 }
+#define NOZZLE_TO_PROBE_OFFSET { -42, 0, 0 }
 
 // Most probes should stay away from the edges of the bed, but
 // with NOZZLE_AS_PROBE this can be negative for a wider probing area.
@@ -1631,7 +1697,7 @@
 #define DISABLE_E false             // Disable the extruder when not stepping
 #define DISABLE_INACTIVE_EXTRUDER   // Keep only the active extruder enabled
 
-// @section machine
+// @section motion
 
 // Invert the stepper direction. Change (or reverse the motor connector) if an axis goes the wrong way.
 #define INVERT_X_DIR false
@@ -1884,7 +1950,7 @@
  */
 #define PREHEAT_BEFORE_LEVELING
 #if ENABLED(PREHEAT_BEFORE_LEVELING)
-  #define LEVELING_NOZZLE_TEMP 180   // (°C) Only applies to E0 at this time
+  #define LEVELING_NOZZLE_TEMP 200   // (°C) Only applies to E0 at this time
   #define LEVELING_BED_TEMP     55
 #endif
 
@@ -1910,17 +1976,27 @@
 #endif
 
 #if ANY(MESH_BED_LEVELING, AUTO_BED_LEVELING_BILINEAR, AUTO_BED_LEVELING_UBL)
-  // Gradually reduce leveling correction until a set height is reached,
-  // at which point movement will be level to the machine's XY plane.
-  // The height can be set with M420 Z<height>
+  /**
+   * Gradually reduce leveling correction until a set height is reached,
+   * at which point movement will be level to the machine's XY plane.
+   * The height can be set with M420 Z<height>
+   */
   #define ENABLE_LEVELING_FADE_HEIGHT
   #if ENABLED(ENABLE_LEVELING_FADE_HEIGHT)
     #define DEFAULT_LEVELING_FADE_HEIGHT 10.0 // (mm) Default fade height.
   #endif
 
-  // For Cartesian machines, instead of dividing moves on mesh boundaries,
-  // split up moves into short segments like a Delta. This follows the
-  // contours of the bed more closely than edge-to-edge straight moves.
+  /**
+   * Add Z offset (M424 Z) that applies to all moves at the planner level.
+   * This Z offset will be automatically set to the middle value with G29.
+   */
+  //#define GLOBAL_MESH_Z_OFFSET
+
+  /**
+   * For Cartesian machines, instead of dividing moves on mesh boundaries,
+   * split up moves into short segments like a Delta. This follows the
+   * contours of the bed more closely than edge-to-edge straight moves.
+   */
   #define SEGMENT_LEVELED_MOVES
   #define LEVELED_SEGMENT_LENGTH 5.0 // (mm) Length of all segments (except the last one)
 
@@ -2064,7 +2140,7 @@
 // Manually set the home position. Leave these undefined for automatic settings.
 // For DELTA this is the top-center of the Cartesian print volume.
 //#define MANUAL_X_HOME_POS 0
-//#define MANUAL_Y_HOME_POS 0
+#define MANUAL_Y_HOME_POS -9
 //#define MANUAL_Z_HOME_POS 0
 //#define MANUAL_I_HOME_POS 0
 //#define MANUAL_J_HOME_POS 0
@@ -2131,9 +2207,8 @@
   #define XY_DIAG_BD 282.8427124746
   #define XY_SIDE_AD 200
 
-  // Or, set the default skew factors directly here
-  // to override the above measurements:
-  #define XY_SKEW_FACTOR 0.0
+  // Or, set the XY skew factor directly:
+  //#define XY_SKEW_FACTOR 0.0
 
   //#define SKEW_CORRECTION_FOR_Z
   #if ENABLED(SKEW_CORRECTION_FOR_Z)
@@ -2142,8 +2217,10 @@
     #define YZ_DIAG_AC 282.8427124746
     #define YZ_DIAG_BD 282.8427124746
     #define YZ_SIDE_AD 200
-    #define XZ_SKEW_FACTOR 0.0
-    #define YZ_SKEW_FACTOR 0.0
+
+    // Or, set the Z skew factors directly:
+    //#define XZ_SKEW_FACTOR 0.0
+    //#define YZ_SKEW_FACTOR 0.0
   #endif
 
   // Enable this option for M852 to set skew at runtime
@@ -2201,19 +2278,19 @@
 // @section temperature
 
 //
-// Preheat Constants - Up to 6 are supported without changes
+// Preheat Constants - Up to 10 are supported without changes
 //
 #define PREHEAT_1_LABEL       "PLA"
-#define PREHEAT_1_TEMP_HOTEND 185
-#define PREHEAT_1_TEMP_BED     45
+#define PREHEAT_1_TEMP_HOTEND 200
+#define PREHEAT_1_TEMP_BED     55
 #define PREHEAT_1_TEMP_CHAMBER 35
-#define PREHEAT_1_FAN_SPEED   255 // Value from 0 to 255
+#define PREHEAT_1_FAN_SPEED   102 // Value from 0 to 255
 
-#define PREHEAT_2_LABEL       "ABS"
-#define PREHEAT_2_TEMP_HOTEND 240
-#define PREHEAT_2_TEMP_BED     70
-#define PREHEAT_2_TEMP_CHAMBER 35
-#define PREHEAT_2_FAN_SPEED   255 // Value from 0 to 255
+// #define PREHEAT_2_LABEL       "ABS"
+// #define PREHEAT_2_TEMP_HOTEND 240
+// #define PREHEAT_2_TEMP_BED     70
+// #define PREHEAT_2_TEMP_CHAMBER 35
+// #define PREHEAT_2_FAN_SPEED   255 // Value from 0 to 255
 
 // @section motion
 
@@ -2359,7 +2436,7 @@
  */
 //#define PRINTCOUNTER
 #if ENABLED(PRINTCOUNTER)
-  #define PRINTCOUNTER_SAVE_INTERVAL 60 // (minutes) EEPROM save interval during print
+  #define PRINTCOUNTER_SAVE_INTERVAL 60 // (minutes) EEPROM save interval during print. A value of 0 will save stats at end of print.
 #endif
 
 // @section security
@@ -2466,7 +2543,7 @@
  * just remove some extraneous menu items to recover space.
  */
 //#define NO_LCD_MENUS
-#define SLIM_LCD_MENUS
+//#define SLIM_LCD_MENUS
 
 //
 // ENCODER SETTINGS
@@ -2530,7 +2607,7 @@
 //
 // Add individual axis homing items (Home X, Home Y, and Home Z) to the LCD menu.
 //
-//#define INDIVIDUAL_AXIS_HOMING_MENU
+#define INDIVIDUAL_AXIS_HOMING_MENU
 //#define INDIVIDUAL_AXIS_HOMING_SUBMENU
 
 //
@@ -2730,7 +2807,7 @@
 
 //
 // ReprapWorld Graphical LCD
-// https://reprapworld.com/?products_details&products_id/1218
+// https://reprapworld.com/electronics/3d-printer-modules/autonomous-printing/graphical-lcd-screen-v1-0/
 //
 //#define REPRAPWORLD_GRAPHICAL_LCD
 
@@ -2931,23 +3008,16 @@
 
 /**
  * DGUS Touch Display with DWIN OS. (Choose one.)
- * ORIGIN : https://www.aliexpress.com/item/32993409517.html
- * FYSETC : https://www.aliexpress.com/item/32961471929.html
- * MKS    : https://www.aliexpress.com/item/1005002008179262.html
- *
- * Flash display with DGUS Displays for Marlin:
- *  - Format the SD card to FAT32 with an allocation size of 4kb.
- *  - Download files as specified for your type of display.
- *  - Plug the microSD card into the back of the display.
- *  - Boot the display and wait for the update to complete.
  *
  * ORIGIN (Marlin DWIN_SET)
  *  - Download https://github.com/coldtobi/Marlin_DGUS_Resources
  *  - Copy the downloaded DWIN_SET folder to the SD card.
+ *  - Product: https://www.aliexpress.com/item/32993409517.html
  *
  * FYSETC (Supplier default)
  *  - Download https://github.com/FYSETC/FYSTLCD-2.0
  *  - Copy the downloaded SCREEN folder to the SD card.
+ *  - Product: https://www.aliexpress.com/item/32961471929.html
  *
  * HIPRECY (Supplier default)
  *  - Download https://github.com/HiPrecy/Touch-Lcd-LEO
@@ -2956,19 +3026,31 @@
  * MKS (MKS-H43) (Supplier default)
  *  - Download https://github.com/makerbase-mks/MKS-H43
  *  - Copy the downloaded DWIN_SET folder to the SD card.
+ *  - Product: https://www.aliexpress.com/item/1005002008179262.html
  *
  * RELOADED (T5UID1)
  *  - Download https://github.com/Desuuuu/DGUS-reloaded/releases
  *  - Copy the downloaded DWIN_SET folder to the SD card.
+ *
+ * IA_CREALITY (T5UID1)
+ *  - Download https://github.com/InsanityAutomation/Marlin/raw/CrealityDwin2.0_Bleeding/TM3D_Combined480272_Landscape_V7.7z
+ *  - Copy the downloaded DWIN_SET folder to the SD card.
+ *
+ * Flash display with DGUS Displays for Marlin:
+ *  - Format the SD card to FAT32 with an allocation size of 4kb.
+ *  - Download files as specified for your type of display.
+ *  - Plug the microSD card into the back of the display.
+ *  - Boot the display and wait for the update to complete.
  */
-//#define DGUS_LCD_UI_ORIGIN
-//#define DGUS_LCD_UI_FYSETC
-//#define DGUS_LCD_UI_HIPRECY
-//#define DGUS_LCD_UI_MKS
-//#define DGUS_LCD_UI_RELOADED
-#if ENABLED(DGUS_LCD_UI_MKS)
-  #define USE_MKS_GREEN_UI
-#endif
+//#define DGUS_LCD_UI ORIGIN
+//#if DGUS_UI_IS(MKS)
+//  #define USE_MKS_GREEN_UI
+//#endif
+
+//
+// CR-6 OEM touch screen. A DWIN display with touch.
+//
+//#define DWIN_CREALITY_TOUCHLCD
 
 //
 // Touch-screen LCD for Malyan M200/M300 printers
@@ -2988,12 +3070,19 @@
 //#define ANYCUBIC_LCD_CHIRON
 #if EITHER(ANYCUBIC_LCD_I3MEGA, ANYCUBIC_LCD_CHIRON)
   //#define ANYCUBIC_LCD_DEBUG
+  //#define ANYCUBIC_LCD_GCODE_EXT  // Add ".gcode" to menu entries for DGUS clone compatibility
 #endif
 
 //
 // 320x240 Nextion 2.8" serial TFT Resistive Touch Screen NX3224T028
 //
 //#define NEXTION_TFT
+
+//
+// PanelDue touch controller by Escher3D
+// http://escher3d.com/pages/order/products/product2.php
+//
+//#define PANELDUE
 
 //
 // Third-party or vendor-customized controller interfaces.
@@ -3056,7 +3145,7 @@
 //#define MKS_ROBIN_TFT_V1_1R
 
 //
-// 480x320, 3.5", FSMC Stock Display from TronxXY
+// 480x320, 3.5", FSMC Stock Display from Tronxy
 //
 //#define TFT_TRONXY_X5SA
 
@@ -3123,6 +3212,19 @@
 //#define TFT_COLOR_UI
 //#define TFT_LVGL_UI
 
+#if ENABLED(TFT_COLOR_UI)
+  /**
+   * TFT Font for Color_UI. Choose one of the following:
+   *
+   * NOTOSANS  - Default font with antialiasing. Supports Latin Extended and non-Latin characters.
+   * UNIFONT   - Lightweight font, no antialiasing. Supports Latin Extended and non-Latin characters.
+   * HELVETICA - Lightweight font, no antialiasing. Supports Basic Latin (0x0020-0x007F) and Latin-1 Supplement (0x0080-0x00FF) characters only.
+   */
+  #define TFT_FONT  NOTOSANS
+
+  //#define TFT_SHARED_SPI   // SPI is shared between TFT display and other devices. Disable async data transfer
+#endif
+
 #if ENABLED(TFT_LVGL_UI)
   //#define MKS_WIFI_MODULE  // MKS WiFi module
 #endif
@@ -3155,10 +3257,11 @@
 //
 //#define TOUCH_SCREEN
 #if ENABLED(TOUCH_SCREEN)
-  #define BUTTON_DELAY_EDIT  50 // (ms) Button repeat delay for edit screens
-  #define BUTTON_DELAY_MENU 250 // (ms) Button repeat delay for menus
+  #define BUTTON_DELAY_EDIT      50 // (ms) Button repeat delay for edit screens
+  #define BUTTON_DELAY_MENU     250 // (ms) Button repeat delay for menus
 
-  //#define TOUCH_IDLE_SLEEP 300 // (s) Turn off the TFT backlight if set (5mn)
+  //#define DISABLE_ENCODER         // Disable the click encoder, if any
+  //#define TOUCH_IDLE_SLEEP_MINS 5 // (minutes) Display Sleep after a period of inactivity. Set with M255 S.
 
   #define TOUCH_SCREEN_CALIBRATION
 
@@ -3249,16 +3352,19 @@
  * luminance values can be set from 0 to 255.
  * For NeoPixel LED an overall brightness parameter is also available.
  *
- * *** CAUTION ***
+ *  === CAUTION ===
  *  LED Strips require a MOSFET Chip between PWM lines and LEDs,
  *  as the Arduino cannot handle the current the LEDs will require.
  *  Failure to follow this precaution can destroy your Arduino!
+ *
  *  NOTE: A separate 5V power supply is required! The NeoPixel LED needs
  *  more current than the Arduino 5V linear regulator can produce.
- * *** CAUTION ***
  *
- * LED Type. Enable only one of the following two options.
+ *  Requires PWM frequency between 50 <> 100Hz (Check HAL or variant)
+ *  Use FAST_PWM_FAN, if possible, to reduce fan noise.
  */
+
+// LED Type. Enable only one of the following two options:
 //#define RGB_LED
 //#define RGBW_LED
 
@@ -3267,6 +3373,13 @@
   //#define RGB_LED_G_PIN 43
   //#define RGB_LED_B_PIN 35
   //#define RGB_LED_W_PIN -1
+#endif
+
+#if ANY(RGB_LED, RGBW_LED, PCA9632)
+  //#define RGB_STARTUP_TEST              // For PWM pins, fade between all colors
+  #if ENABLED(RGB_STARTUP_TEST)
+    #define RGB_STARTUP_TEST_INNER_MS 10  // (ms) Reduce or increase fading speed
+  #endif
 #endif
 
 // Support for Adafruit NeoPixel LED driver
@@ -3288,6 +3401,7 @@
     #define NEOPIXEL2_PIXELS           15 // Number of LEDs in the second strip
     #define NEOPIXEL2_BRIGHTNESS      127 // Initial brightness (0-255)
     #define NEOPIXEL2_STARTUP_TEST        // Cycle through colors at startup
+    #define NEOPIXEL_M150_DEFAULT      -1 // Default strip for M150 without 'S'. Use -1 to set all by default.
   #else
     //#define NEOPIXEL2_INSERIES          // Default behavior is NeoPixel 2 in parallel
   #endif
